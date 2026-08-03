@@ -11,14 +11,14 @@
 function getConfig_() {
   const props = PropertiesService.getScriptProperties();
   const config = {
-    claudeApiKey: props.getProperty('CLAUDE_API_KEY'),
+    openaiApiKey: props.getProperty('OPENAI_API_KEY'),
     referenceArticleText: props.getProperty('REFERENCE_ARTICLE_TEXT') || DEFAULT_REFERENCE_ARTICLE_TEXT,
     wpBaseUrl: props.getProperty('WP_BASE_URL') || '',
     wpUsername: props.getProperty('WP_USERNAME') || '',
     wpAppPassword: props.getProperty('WP_APP_PASSWORD') || ''
   };
 
-  const requiredKeys = ['claudeApiKey'];
+  const requiredKeys = ['openaiApiKey'];
   const missing = requiredKeys.filter((key) => !config[key]);
 
   if (missing.length > 0) {

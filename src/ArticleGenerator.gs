@@ -1,22 +1,24 @@
 /**
- * Claude API を呼び出し、キーワードから記事下書き（JSON）を生成する。
+ * OpenAI API を呼び出し、キーワードから記事下書き（JSON）を生成する。
  */
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL = 'claude-sonnet-4-5';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_MODEL = 'gpt-4o-mini';
 
 function generateArticleDraft_(keyword, subKeyword, config) {
-  const response = UrlFetchApp.fetch(CLAUDE_API_URL, {
+  const response = UrlFetchApp.fetch(OPENAI_API_URL, {
     method: 'post',
     headers: {
-      'x-api-key': config.claudeApiKey,
-      'anthropic-version': '2023-06-01',
+      Authorization: `Bearer ${config.openaiApiKey}`,
       'content-type': 'application/json'
     },
     payload: JSON.stringify({
-      model: CLAUDE_MODEL,
+      model: OPENAI_MODEL,
       max_tokens: 4000,
-      system: buildSystemPrompt_(config.referenceArticleText),
-      messages: [{ role: 'user', content: buildUserPrompt_(keyword, subKeyword) }]
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: buildSystemPrompt_(config.referenceArticleText) },
+        { role: 'user', content: buildUserPrompt_(keyword, subKeyword) }
+      ]
     }),
     muteHttpExceptions: true
   });
@@ -26,10 +28,10 @@ function generateArticleDraft_(keyword, subKeyword, config) {
 
   if (statusCode !== 200) {
     const message = body.error ? body.error.message : response.getContentText();
-    throw new Error(`Claude APIエラー (${statusCode}): ${message}`);
+    throw new Error(`OpenAI APIエラー (${statusCode}): ${message}`);
   }
 
-  return parseArticleJson_(body.content[0].text);
+  return parseArticleJson_(body.choices[0].message.content);
 }
 
 function buildSystemPrompt_(referenceArticleText) {
@@ -85,11 +87,9 @@ function buildUserPrompt_(keyword, subKeyword) {
 }
 
 function parseArticleJson_(text) {
-  const jsonText = extractJson_(text);
-
   let parsed;
   try {
-    parsed = JSON.parse(jsonText);
+    parsed = JSON.parse(text);
   } catch (e) {
     throw new Error(`AIの出力をJSONとして解析できませんでした: ${e.message}`);
   }
@@ -99,13 +99,4 @@ function parseArticleJson_(text) {
   }
 
   return parsed;
-}
-
-function extractJson_(text) {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) {
-    throw new Error('AIの出力からJSONを抽出できませんでした。');
-  }
-  return text.slice(start, end + 1);
 }

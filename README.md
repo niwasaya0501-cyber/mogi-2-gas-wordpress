@@ -1,6 +1,6 @@
-# ブログ記事自動生成システム（GAS + Claude API + WordPress連携コード）
+# ブログ記事自動生成システム（GAS + OpenAI API + WordPress連携コード）
 
-スプレッドシートにキーワードを入力するだけで、Claude がブログ記事の下書き（タイトル・メタディスクリプション・本文）を生成し、スプレッドシートに書き出す仕組みです。
+スプレッドシートにキーワードを入力するだけで、OpenAI（ChatGPT）がブログ記事の下書き（タイトル・メタディスクリプション・本文）を生成し、スプレッドシートに書き出す仕組みです。
 
 > 本リポジトリは模擬案件（ポートフォリオ用・案件2）として作成しています。詳しい要件・提案背景は [`requirements.md`](./requirements.md) を参照してください。
 > 提案書（デザイン版・Artifact）: https://claude.ai/code/artifact/9d32d878-8a14-4913-8e69-59c593356835
@@ -45,7 +45,7 @@ src/
   Config.gs            # スクリプトプロパティ（APIキー等）の読み込み
   ReferenceArticle.gs  # 参考記事のデフォルト値（data/reference-article.md を埋め込み）
   SheetService.gs      # スプレッドシートの読み書き
-  ArticleGenerator.gs  # Claude API 呼び出し・プロンプト構築
+  ArticleGenerator.gs  # OpenAI API 呼び出し・プロンプト構築
   WordPressClient.gs   # WordPress送信ペイロードの組み立て・ログ出力（実投稿コードは未使用のまま実装）
   appsscript.json      # GASプロジェクトのマニフェスト
 test/
@@ -64,9 +64,9 @@ test/
 
 2行目以降に、[`data/keywords-sample.csv`](./data/keywords-sample.csv) のキーワード・サブキーワード列をコピー＆ペーストしてください（同ファイルの「タイトル」「WordPress URL」列は本システムでは使わないため無視して問題ありません）。ステータス列は空欄のままでOKです（未入力時は自動的に「未生成」として扱われます）。
 
-### 2. Claude APIキーを取得する
+### 2. OpenAI APIキーを取得する
 
-[Anthropic Console](https://console.anthropic.com/) でAPIキーを発行します。
+[OpenAI Platform](https://platform.openai.com/api-keys) でAPIキーを発行します。
 
 ### 3. Apps Script プロジェクトを作成し、コードを反映する
 
@@ -93,7 +93,7 @@ Apps Script エディタで「プロジェクトの設定 > スクリプトプ�
 
 | プロパティ名 | 内容 | 必須 |
 |---|---|---|
-| `CLAUDE_API_KEY` | Anthropic の APIキー | ✅ |
+| `OPENAI_API_KEY` | OpenAI の APIキー | ✅ |
 | `REFERENCE_ARTICLE_TEXT` | トーンを合わせたい参考記事の本文テキスト | 任意 |
 | `WP_BASE_URL` | WordPressサイトのURL（実投稿を有効化する場合のみ使用） | 任意（今回未使用） |
 | `WP_USERNAME` | WordPressのユーザー名（同上） | 任意（今回未使用） |
@@ -124,7 +124,7 @@ Apps Script エディタで「実行数」（または実行後に表示され�
 
 ## ローカルでの動作確認（GAS環境なし）
 
-Google Apps Script環境やclaspログインなしで、`src/*.gs` のロジックだけを手元で検証できるハーネスを用意しています。`SpreadsheetApp` / `PropertiesService` / `UrlFetchApp` などのGAS APIをNode.js上でモックし、Claude APIへの通信部分だけ偽のレスポンスに差し替えて `generatePendingArticles()` を実際に実行します。
+Google Apps Script環境やclaspログインなしで、`src/*.gs` のロジックだけを手元で検証できるハーネスを用意しています。`SpreadsheetApp` / `PropertiesService` / `UrlFetchApp` などのGAS APIをNode.js上でモックし、OpenAI APIへの通信部分だけ偽のレスポンスに差し替えて `generatePendingArticles()` を実際に実行します。
 
 ```bash
 node test/local-harness.js
@@ -133,14 +133,14 @@ node test/local-harness.js
 検証している内容:
 - 正常系: キーワードから記事が生成され、シートのステータスが「生成完了」になり、タイトル・メタディスクリプション・本文が書き込まれること
 - サブキーワード欄に指示文めいた文字列（プロンプトインジェクションの疑似ケース）が入っていても、処理が異常終了せず単なるデータとして扱われること
-- 異常系: Claude APIがエラーを返した場合にステータスが「エラー」になり、備考にエラー内容が記録され、他の行の処理には影響しないこと
+- 異常系: OpenAI APIがエラーを返した場合にステータスが「エラー」になり、備考にエラー内容が記録され、他の行の処理には影響しないこと
 - WordPress送信ペイロードのログが `{ title, content, excerpt, status: 'draft' }` の形になっていること
 
-**限界**: このハーネスはClaude APIへの通信を偽のレスポンスに差し替えているため、`<user_keyword>` タグ内の指示文めいた入力を実際のClaudeが本当に無視するかどうかまでは検証できません。それを確認するには、実際のAnthropic APIキーを使って呼び出す必要があります。
+**限界**: このハーネスはOpenAI APIへの通信を偽のレスポンスに差し替えているため、`<user_keyword>` タグ内の指示文めいた入力を実際のモデルが本当に無視するかどうかまでは検証できません。それを確認するには、実際のOpenAI APIキーを使って呼び出す必要があります。
 
 ## 運用上の注意
 
 - 今回の範囲では **WordPressへの書き込みは一切発生しません**（ペイロードの組み立て・ログ出力のみ）。
 - 生成された本文・メタディスクリプションはスプレッドシートのE・F列に書き出されます。**公開判断の前に必ず内容の事実確認・オリジナリティの目視チェックを行ってください。**
-- Claude APIの利用料は従量課金です。生成本数に応じて費用が発生します。
+- OpenAI APIの利用料は従量課金です。生成本数に応じて費用が発生します。
 - エラーが発生した行はステータスが「エラー」になり、H列（備考）にエラー内容が記録されます。内容を確認し、必要であればステータスを空欄に戻して再実行してください。

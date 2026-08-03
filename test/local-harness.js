@@ -2,13 +2,13 @@
  * src/*.gs を実際のGoogle Apps Script環境なしで動作確認するためのローカルハーネス。
  *
  * SpreadsheetApp / PropertiesService / UrlFetchApp / Utilities / Logger を
- * メモリ上のモックに差し替え、Claude APIへの通信部分だけ偽のレスポンスを返す
+ * メモリ上のモックに差し替え、OpenAI APIへの通信部分だけ偽のレスポンスを返す
  * ハンドラに置き換えて generatePendingArticles() を実行する。
  *
  * 目的: プロンプト組み立て → JSON解析 → シート書き込み → ステータス遷移 →
  *       WordPressペイロード組み立てまでの「配線」が正しいことを、
- *       実際のGASデプロイやAnthropic APIキーなしで検証すること。
- * 注意: Claude自身が <user_keyword> タグ内の指示文を無視するかどうかまでは、
+ *       実際のGASデプロイやOpenAI APIキーなしで検証すること。
+ * 注意: モデル自身が <user_keyword> タグ内の指示文を無視するかどうかまでは、
  *       このモックでは検証できない（それには実際のAPI呼び出しが必要）。
  *
  * 実行: node test/local-harness.js
@@ -136,13 +136,13 @@ function buildMockGlobals({ sheet, scriptProperties, fetchHandler }) {
   };
 }
 
-// --- 偽のClaude APIハンドラ ---------------------------------------------
+// --- 偽のOpenAI APIハンドラ ---------------------------------------------
 
-function fakeClaudeFetchHandler(url, options) {
-  assert.strictEqual(url, 'https://api.anthropic.com/v1/messages', 'Claude APIのURLが想定と異なる');
+function fakeOpenAiFetchHandler(url, options) {
+  assert.strictEqual(url, 'https://api.openai.com/v1/chat/completions', 'OpenAI APIのURLが想定と異なる');
 
   const payload = JSON.parse(options.payload);
-  const userMessage = payload.messages[0].content;
+  const userMessage = payload.messages.find((m) => m.role === 'user').content;
   const keywordMatch = userMessage.match(/<user_keyword>\n([\s\S]*?)\n<\/user_keyword>/);
   const keyword = keywordMatch ? keywordMatch[1] : 'キーワード';
 
@@ -166,7 +166,7 @@ function fakeClaudeFetchHandler(url, options) {
 
   return {
     getResponseCode: () => 200,
-    getContentText: () => JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(article) }] })
+    getContentText: () => JSON.stringify({ choices: [{ message: { content: JSON.stringify(article) } }] })
   };
 }
 
@@ -198,15 +198,15 @@ function run() {
       '',
       ''
     ],
-    // エラーケース: Claude APIが500を返すシナリオ
+    // エラーケース: OpenAI APIが500を返すシナリオ
     ['__FORCE_API_ERROR__ テスト用キーワード', '', '', '', '', '', '', '']
   ];
 
   const sheet = createMockSheet(rows);
   const mockGlobals = buildMockGlobals({
     sheet,
-    scriptProperties: { CLAUDE_API_KEY: 'test-dummy-key' },
-    fetchHandler: fakeClaudeFetchHandler
+    scriptProperties: { OPENAI_API_KEY: 'test-dummy-key' },
+    fetchHandler: fakeOpenAiFetchHandler
   });
 
   const context = loadGasContext(mockGlobals);
@@ -236,7 +236,7 @@ function run() {
 
   // エラーケース: ステータスがエラーになり、備考にメッセージが残ること
   assert.strictEqual(result[2][COL.STATUS], 'エラー', 'ケース3がエラーステータスになっていない');
-  assert.ok(result[2][COL.NOTE].includes('Claude APIエラー'), 'ケース3の備考にエラー内容が記録されていない');
+  assert.ok(result[2][COL.NOTE].includes('OpenAI APIエラー'), 'ケース3の備考にエラー内容が記録されていない');
 
   // WordPress送信ペイロードのログが期待どおりの形であること
   const payloadLogs = mockGlobals.__logs.filter((line) => line.trim().startsWith('{'));
