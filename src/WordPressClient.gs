@@ -30,27 +30,22 @@ function logWordPressPayload_(keyword, payload) {
  * Code.gs から本関数を呼び出すよう変更する。
  */
 function createWordPressDraft_(payload, config) {
-  const endpoint = `${config.wpBaseUrl.replace(/\/$/, '')}/wp-json/wp/v2/posts`;
+  const baseUrl = config.wpBaseUrl.replace(/\/$/, '');
   const credentials = Utilities.base64Encode(`${config.wpUsername}:${config.wpAppPassword}`);
 
-  const response = UrlFetchApp.fetch(endpoint, {
-    method: 'post',
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'content-type': 'application/json'
+  const body = fetchJson_(
+    `${baseUrl}/wp-json/wp/v2/posts`,
+    {
+      method: 'post',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        'content-type': 'application/json'
+      },
+      payload: JSON.stringify(payload)
     },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+    201,
+    'WordPress投稿エラー'
+  );
 
-  const statusCode = response.getResponseCode();
-  const body = JSON.parse(response.getContentText());
-
-  if (statusCode !== 201) {
-    const message = body.message || response.getContentText();
-    throw new Error(`WordPress投稿エラー (${statusCode}): ${message}`);
-  }
-
-  const editUrl = `${config.wpBaseUrl.replace(/\/$/, '')}/wp-admin/post.php?post=${body.id}&action=edit`;
-  return { postId: body.id, editUrl };
+  return { postId: body.id, editUrl: `${baseUrl}/wp-admin/post.php?post=${body.id}&action=edit` };
 }

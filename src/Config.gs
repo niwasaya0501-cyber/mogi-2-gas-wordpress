@@ -20,13 +20,12 @@ const PROPERTY_NAMES_ = {
 
 function getConfig_() {
   const props = PropertiesService.getScriptProperties();
-  const config = {
-    openaiApiKey: props.getProperty(PROPERTY_NAMES_.openaiApiKey),
-    referenceArticleText: props.getProperty(PROPERTY_NAMES_.referenceArticleText) || DEFAULT_REFERENCE_ARTICLE_TEXT,
-    wpBaseUrl: props.getProperty(PROPERTY_NAMES_.wpBaseUrl) || '',
-    wpUsername: props.getProperty(PROPERTY_NAMES_.wpUsername) || '',
-    wpAppPassword: props.getProperty(PROPERTY_NAMES_.wpAppPassword) || ''
-  };
+  const config = {};
+
+  Object.keys(PROPERTY_NAMES_).forEach((key) => {
+    config[key] = props.getProperty(PROPERTY_NAMES_[key]) || '';
+  });
+  config.referenceArticleText = config.referenceArticleText || DEFAULT_REFERENCE_ARTICLE_TEXT;
 
   const requiredKeys = ['openaiApiKey'];
   const missing = requiredKeys.filter((key) => !config[key]).map((key) => PROPERTY_NAMES_[key]);

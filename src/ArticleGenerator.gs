@@ -5,31 +5,27 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const OPENAI_MODEL = 'gpt-4o-mini';
 
 function generateArticleDraft_(keyword, subKeyword, config) {
-  const response = UrlFetchApp.fetch(OPENAI_API_URL, {
-    method: 'post',
-    headers: {
-      Authorization: `Bearer ${config.openaiApiKey}`,
-      'content-type': 'application/json'
+  const body = fetchJson_(
+    OPENAI_API_URL,
+    {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${config.openaiApiKey}`,
+        'content-type': 'application/json'
+      },
+      payload: JSON.stringify({
+        model: OPENAI_MODEL,
+        max_tokens: 4000,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: buildSystemPrompt_(config.referenceArticleText) },
+          { role: 'user', content: buildUserPrompt_(keyword, subKeyword) }
+        ]
+      })
     },
-    payload: JSON.stringify({
-      model: OPENAI_MODEL,
-      max_tokens: 4000,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: buildSystemPrompt_(config.referenceArticleText) },
-        { role: 'user', content: buildUserPrompt_(keyword, subKeyword) }
-      ]
-    }),
-    muteHttpExceptions: true
-  });
-
-  const statusCode = response.getResponseCode();
-  const body = JSON.parse(response.getContentText());
-
-  if (statusCode !== 200) {
-    const message = body.error ? body.error.message : response.getContentText();
-    throw new Error(`OpenAI APIエラー (${statusCode}): ${message}`);
-  }
+    200,
+    'OpenAI APIエラー'
+  );
 
   return parseArticleJson_(body.choices[0].message.content);
 }
@@ -98,12 +94,5 @@ function parseArticleJson_(text) {
     throw new Error('AIの出力にtitleまたはbody_htmlが含まれていません。');
   }
 
-  parsed.body_html = formatBodyHtmlForDisplay_(parsed.body_html);
-
   return parsed;
-}
-
-/** スプレッドシートのセルで読みやすいように、閉じタグの直後に改行を入れる */
-function formatBodyHtmlForDisplay_(bodyHtml) {
-  return bodyHtml.replace(/(<\/(?:h2|h3|p|ul|ol|li)>)/g, '$1\n').trim();
 }

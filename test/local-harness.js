@@ -24,6 +24,7 @@ const SRC_DIR = path.join(__dirname, '..', 'src');
 const GAS_FILES = [
   'ReferenceArticle.gs',
   'Config.gs',
+  'HttpClient.gs',
   'SheetService.gs',
   'ArticleGenerator.gs',
   'WordPressClient.gs',

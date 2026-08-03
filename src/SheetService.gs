@@ -25,12 +25,19 @@ const STATUS = {
   ERROR: 'エラー'
 };
 
+// 1回の実行内でシートオブジェクトを使い回すためのキャッシュ
+let cachedSheet_ = null;
+
 function getSheet_() {
+  if (cachedSheet_) return cachedSheet_;
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   if (!sheet) {
     throw new Error(`シート「${SHEET_NAME}」が見つかりません。README の手順に沿ってシートを用意してください。`);
   }
-  return sheet;
+
+  cachedSheet_ = sheet;
+  return cachedSheet_;
 }
 
 /** キーワードが入力済みで、未処理（空欄 or 「未生成」）の行を取得する */
@@ -72,7 +79,7 @@ function updateRow_(rowNumber, values) {
   }
   if (values.body !== undefined) {
     const bodyRange = sheet.getRange(rowNumber, COLUMNS.BODY);
-    bodyRange.setValue(values.body);
+    bodyRange.setValue(formatBodyHtmlForSheet_(values.body));
     bodyRange.setWrap(true);
   }
   if (values.note !== undefined) {
@@ -80,4 +87,9 @@ function updateRow_(rowNumber, values) {
   }
 
   sheet.getRange(rowNumber, COLUMNS.UPDATED_AT).setValue(new Date());
+}
+
+/** スプレッドシートのセルで読みやすいように、閉じタグの直後に改行を入れる */
+function formatBodyHtmlForSheet_(bodyHtml) {
+  return bodyHtml.replace(/(<\/(?:h2|h3|p|ul|ol|li)>)/g, '$1\n').trim();
 }
