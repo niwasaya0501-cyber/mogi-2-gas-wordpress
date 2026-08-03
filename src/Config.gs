@@ -8,23 +8,33 @@
  * referenceArticleText が未設定の場合は、ReferenceArticle.gs の
  * DEFAULT_REFERENCE_ARTICLE_TEXT（キンタイCloudのサンプル記事）を既定値として使う。
  */
+
+// config内の各キーに対応する、実際のスクリプトプロパティ名
+const PROPERTY_NAMES_ = {
+  openaiApiKey: 'OPENAI_API_KEY',
+  referenceArticleText: 'REFERENCE_ARTICLE_TEXT',
+  wpBaseUrl: 'WP_BASE_URL',
+  wpUsername: 'WP_USERNAME',
+  wpAppPassword: 'WP_APP_PASSWORD'
+};
+
 function getConfig_() {
   const props = PropertiesService.getScriptProperties();
   const config = {
-    openaiApiKey: props.getProperty('OPENAI_API_KEY'),
-    referenceArticleText: props.getProperty('REFERENCE_ARTICLE_TEXT') || DEFAULT_REFERENCE_ARTICLE_TEXT,
-    wpBaseUrl: props.getProperty('WP_BASE_URL') || '',
-    wpUsername: props.getProperty('WP_USERNAME') || '',
-    wpAppPassword: props.getProperty('WP_APP_PASSWORD') || ''
+    openaiApiKey: props.getProperty(PROPERTY_NAMES_.openaiApiKey),
+    referenceArticleText: props.getProperty(PROPERTY_NAMES_.referenceArticleText) || DEFAULT_REFERENCE_ARTICLE_TEXT,
+    wpBaseUrl: props.getProperty(PROPERTY_NAMES_.wpBaseUrl) || '',
+    wpUsername: props.getProperty(PROPERTY_NAMES_.wpUsername) || '',
+    wpAppPassword: props.getProperty(PROPERTY_NAMES_.wpAppPassword) || ''
   };
 
   const requiredKeys = ['openaiApiKey'];
-  const missing = requiredKeys.filter((key) => !config[key]);
+  const missing = requiredKeys.filter((key) => !config[key]).map((key) => PROPERTY_NAMES_[key]);
 
   if (missing.length > 0) {
     throw new Error(
       `スクリプトプロパティが未設定です: ${missing.join(', ')}\n` +
-      '「プロジェクトの設定 > スクリプトプロパティ」から設定してください。'
+      '「プロジェクトの設定 > スクリプトプロパティ」から、上記の名前どおりに（大文字・アンダースコア込みで）設定してください。'
     );
   }
 
