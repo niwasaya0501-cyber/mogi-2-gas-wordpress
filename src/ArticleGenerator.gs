@@ -98,5 +98,12 @@ function parseArticleJson_(text) {
     throw new Error('AIの出力にtitleまたはbody_htmlが含まれていません。');
   }
 
+  parsed.body_html = formatBodyHtmlForDisplay_(parsed.body_html);
+
   return parsed;
+}
+
+/** スプレッドシートのセルで読みやすいように、閉じタグの直後に改行を入れる */
+function formatBodyHtmlForDisplay_(bodyHtml) {
+  return bodyHtml.replace(/(<\/(?:h2|h3|p|ul|ol|li)>)/g, '$1\n').trim();
 }

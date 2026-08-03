@@ -51,6 +51,9 @@ function createMockSheet(initialRows) {
           getValue() {
             const r = row - 2;
             return data[r] ? data[r][col - 1] : '';
+          },
+          setWrap() {
+            return this;
           }
         };
       }

@@ -71,7 +71,9 @@ function updateRow_(rowNumber, values) {
     sheet.getRange(rowNumber, COLUMNS.META_DESCRIPTION).setValue(values.metaDescription);
   }
   if (values.body !== undefined) {
-    sheet.getRange(rowNumber, COLUMNS.BODY).setValue(values.body);
+    const bodyRange = sheet.getRange(rowNumber, COLUMNS.BODY);
+    bodyRange.setValue(values.body);
+    bodyRange.setWrap(true);
   }
   if (values.note !== undefined) {
     sheet.getRange(rowNumber, COLUMNS.NOTE).setValue(values.note);
