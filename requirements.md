@@ -31,7 +31,7 @@
 ## 4. 技術構成
 - Google スプレッドシート（既存）
 - Google Apps Script（無料）
-- Claude API（月額 500〜1,000 円程度）
+- OpenAI API（月額 500〜1,000 円程度）
 - WordPress REST API（既存サイト）
 
 ## 5. スケジュールと費用
