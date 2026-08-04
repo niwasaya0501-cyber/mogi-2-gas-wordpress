@@ -1,11 +1,45 @@
 /**
  * スプレッドシートのメニューから起動するエントリーポイント。
  */
+const MANUAL_URLS_ = {
+  apiKeySetup: 'https://claude.ai/code/artifact/99df6620-c6c8-4dc8-a4dc-45e612d22248',
+  usage: 'https://claude.ai/code/artifact/601a243d-ecb1-43ef-9ced-3880ba590adb',
+  troubleshooting: 'https://claude.ai/code/artifact/fa540d64-259e-42f9-a0ed-17c61f9b4582'
+};
+
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('記事自動生成')
+  const ui = SpreadsheetApp.getUi();
+
+  ui.createMenu('記事自動生成')
     .addItem('未処理のキーワードを一括生成', 'generatePendingArticles')
     .addToUi();
+
+  ui.createMenu('マニュアル')
+    .addItem('① APIキー設定手順書', 'openApiKeySetupManual_')
+    .addItem('② 使い方マニュアル', 'openUsageManual_')
+    .addItem('③ トラブルシューティング', 'openTroubleshootingManual_')
+    .addToUi();
+}
+
+function openApiKeySetupManual_() {
+  openManualUrl_(MANUAL_URLS_.apiKeySetup);
+}
+
+function openUsageManual_() {
+  openManualUrl_(MANUAL_URLS_.usage);
+}
+
+function openTroubleshootingManual_() {
+  openManualUrl_(MANUAL_URLS_.troubleshooting);
+}
+
+/** メニューのクリックから直接ブラウザタブを開けないため、開いたら即閉じる透明なダイアログ経由でリンクを開く */
+function openManualUrl_(url) {
+  const html = HtmlService
+    .createHtmlOutput(`<script>window.open('${url}', '_blank');google.script.host.close();</script>`)
+    .setWidth(1)
+    .setHeight(1);
+  SpreadsheetApp.getUi().showModalDialog(html, 'マニュアルを開いています…');
 }
 
 function generatePendingArticles() {
