@@ -40,8 +40,10 @@ flowchart LR
 クライアントの要望は「生成した記事をWordPressに下書き保存する」ことだが、今回のスコープでは**投稿ロジックまでを実装し、実際の送信は行わない**（詳細は 4.3 スコープ外を参照）。以下は、実装済みのWordPress連携が前提とする構成である。
 
 ### 3.1 想定するWordPress環境
-- **セルフホスト型 WordPress**（wordpress.org版）で、REST APIがデフォルトのまま有効になっていること。
-  - WordPress.com（ホスティングサービス版）固有のAPIや、headless CMSとしての特殊構成は対象外。
+- クライアント独自ドメイン上で、**有料レンタルサーバー等にインストールした一般的なWordPress**（wordpress.org版ソフトウェア）を運用している想定（例: `https://example-saas.co.jp/blog/` のようにブログを独自ドメイン配下のディレクトリで運用）。
+  - サーバーの自己管理（VPS等でのセルフホスト運用）を必須とはしない。エックスサーバー等の一般的な有料レンタルサーバーで動く、標準的なwordpress.org版であれば対象。
+  - **WordPress.com（wordpress.comの有料プラン）は対象外**。WordPress.com独自のREST API（OAuth2認証中心）とは認証方式・エンドポイントが異なるため、本仕様（3.2）はそのままでは使えない。
+- REST APIがデフォルトのまま有効になっていること（wordpress.org版であれば標準搭載、プラグイン等の追加設定は不要）。
 - パーマリンク設定が「基本」（`?p=123`形式）以外になっていること（REST APIのルート `/wp-json/` が正しく解決されるための一般的な前提条件）。
 - 投稿権限を持つユーザーアカウントが1つ用意されていること（下書き作成のみなので `投稿者` 権限以上で可）。
 
@@ -49,6 +51,7 @@ flowchart LR
 | 項目 | 内容 |
 |---|---|
 | エンドポイント | `POST {WP_BASE_URL}/wp-json/wp/v2/posts`（WordPress REST API v2, 標準の投稿エンドポイント） |
+| `WP_BASE_URL` の例 | `https://example-saas.co.jp/blog`（ブログが独自ドメイン配下のサブディレクトリで運用されている場合、そのディレクトリまでを含めて設定する） |
 | 認証方式 | **Basic認証 + アプリケーションパスワード**（WordPress 5.6以降の標準機能。プラグイン不要） |
 | Authorizationヘッダー | `Basic base64(ユーザー名:アプリケーションパスワード)` |
 | Content-Type | `application/json` |
