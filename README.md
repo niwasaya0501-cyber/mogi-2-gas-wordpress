@@ -2,7 +2,7 @@
 
 スプレッドシートにキーワードを入力するだけで、OpenAI（ChatGPT）がブログ記事の下書き（タイトル・メタディスクリプション・本文）を生成し、スプレッドシートに書き出す仕組みです。
 
-> 本リポジトリは模擬案件（ポートフォリオ用・案件2）として作成しています。詳しい要件・提案背景は [`requirements.md`](./requirements.md) を参照してください。
+> 本リポジトリは模擬案件（ポートフォリオ用・案件2）として作成しています。提案背景は [`requirements.md`](./requirements.md)（提案書）、実装レベルの詳細は [`docs/requirements-definition.md`](./docs/requirements-definition.md)（要件定義書・WordPress連携仕様を含む）を参照してください。
 > 提案書（デザイン版・Artifact）: https://claude.ai/code/artifact/9d32d878-8a14-4913-8e69-59c593356835
 
 案件2では、架空のクラウド勤怠管理サービス「キンタイ Cloud」を題材に、トーン見本記事とSEOキーワードリストを [`data/`](./data) 配下に格納しています。
