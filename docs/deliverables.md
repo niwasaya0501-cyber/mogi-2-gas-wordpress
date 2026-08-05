@@ -2,6 +2,8 @@
 
 案件2（ブログ記事自動生成システム）の納品物一覧です。各リンクはHTML版の手順書（Claude Artifact）です。
 
+リポジトリ内のドキュメントとして、[要件定義書](./requirements-definition.md)（WordPress連携仕様含む）と [運用手順書](./operations-manual.md)（週次運用フロー・定期メンテナンス・エラー対応）も納品物に含みます。
+
 **クライアント様向けご案内ページ**（①②③へのリンクをまとめたもの）: https://claude.ai/code/artifact/0f8d3eb6-a245-4d6f-aa4a-8e0c15f38cd8
 
 | # | 資料 | 内容 | リンク |
